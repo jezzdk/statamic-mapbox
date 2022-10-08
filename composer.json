@@ -1,0 +1,31 @@
+{
+    "name": "jezzdk/statamic-mapbox",
+    "autoload": {
+        "psr-4": {
+            "Jezzdk\\StatamicMapbox\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Jess Stopa"
+        }
+    ],
+    "support": {
+        "email": "jess@stopa.dk"
+    },
+    "extra": {
+        "statamic": {
+            "name": "Statamic Mapbox",
+            "description": "Statamic Mapbox addon",
+            "editions": [
+                "free",
+                "pro"
+            ]
+        },
+        "laravel": {
+            "providers": [
+                "Jezzdk\\StatamicMapbox\\ServiceProvider"
+            ]
+        }
+    }
+}
