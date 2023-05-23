@@ -28,7 +28,7 @@
         <div class="flex justify-between">
             <div>
                 <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="!text-red-400 text-xs">[x] Remove marker</a>
-                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[x] Add marker</a>
+                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[+] Add marker</a>
             </div>
             <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="!text-red-400 text-xs">[-] Reset map</a></div>
         </div>
