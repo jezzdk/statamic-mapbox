@@ -12,8 +12,12 @@ class ServiceProvider extends AddonServiceProvider
         \Jezzdk\StatamicMapbox\Tags\MapboxScript::class,
     ];
 
-    protected $scripts = [
-        __DIR__ . '/../dist/js/mapbox.js',
+    protected $vite = [
+        'input' => [
+            'resources/js/addon.js',
+            'resources/css/addon.css',
+        ],
+        'publicDirectory' => 'dist',
     ];
 
     protected $fieldtypes = [

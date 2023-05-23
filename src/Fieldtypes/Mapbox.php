@@ -97,7 +97,7 @@ class Mapbox extends Fieldtype
             ],
             'initial_zoom' => [
                 'display' => 'Initial zoom level',
-                'instructions' => 'Set a zoom level from 1 to 21.',
+                'instructions' => 'Set a zoom level from 1 (far) to 21 (near).',
                 'type' => 'text',
                 'default' => '16',
                 'width' => 50

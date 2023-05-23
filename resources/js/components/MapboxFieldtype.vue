@@ -1,35 +1,43 @@
 <template>
     <div>
-        <div class="relative">
+        <div class="relative border border-gray-500">
             <div class="w-full max-w-3xl h-96 overflow-hidden" ref="map"></div>
-            <div v-if="config.maptypes" id="menu" class="absolute top-0 left-0 flex items-center bg-grey-20 px-1">
-                <input id="streets-v11" type="radio" v-model="type" value="streets-v11" class="mr-1">
-                <label for="streets-v11" class="mr-1">streets</label>
-                <input id="satellite-v9" type="radio" v-model="type" value="satellite-v9" class="mr-1">
-                <label for="satellite-v9" class="mr-1">satellite</label>
-                <input id="satellite-streets-v11" type="radio" v-model="type" value="satellite-streets-v11" class="mr-1">
-                <label for="satellite-streets-v11" class="mr-1">hybrid</label>
-                <input id="outdoors-v11" type="radio" v-model="type" value="outdoors-v11" class="mr-1">
-                <label for="outdoors-v11">outdoors</label>
-                <template v-if="meta.pro">
-                    <input id="custom" type="radio" v-model="type" value="custom" class="ml-1 mr-1">
+            <div v-if="config.maptypes" id="menu" class="absolute top-0 left-0 flex items-center gap-4 bg-gray-200 px-2 py-1">
+                <div class="flex items-center gap-1">
+                    <input id="streets-v11" type="radio" v-model="type" value="streets-v11">
+                    <label for="streets-v11">streets</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="satellite-v9" type="radio" v-model="type" value="satellite-v9">
+                    <label for="satellite-v9">satellite</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="satellite-streets-v11" type="radio" v-model="type" value="satellite-streets-v11">
+                    <label for="satellite-streets-v11">hybrid</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="outdoors-v11" type="radio" v-model="type" value="outdoors-v11">
+                    <label for="outdoors-v11">outdoors</label>
+                </div>
+                <div v-if="meta.pro" class="flex items-center gap-1">
+                    <input id="custom" type="radio" v-model="type" value="custom">
                     <label for="custom">custom</label>
-                </template>
+                </div>
             </div>
         </div>
         <div class="flex justify-between">
             <div>
-                <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="text-red text-xs">[x] Remove marker</a>
-                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-red text-xs">[x] Add marker</a>
+                <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="!text-red-400 text-xs">[x] Remove marker</a>
+                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[x] Add marker</a>
             </div>
-            <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="text-red text-xs">[-] Reset map</a></div>
+            <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="!text-red-400 text-xs">[-] Reset map</a></div>
         </div>
         <div v-if="type === 'custom'" class="my-2">
             <div v-if="meta.pro">
                 <div>
                     <div class="help-block"><p>Paste in the style URL here.</p></div>
                     <input type="text" v-model="style" :placeholder="`mapbox://styles/mapbox/${config.initial_type}`" class="input-text">
-                    <div class="text-grey text-xs">Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</div>
+                    <div class="text-gray-600 text-xs">Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</div>
                 </div>
             </div>
             <div v-else>
