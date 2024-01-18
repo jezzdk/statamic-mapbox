@@ -32,6 +32,7 @@
             </div>
             <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="!text-red-400 text-xs">[-] Reset map</a></div>
         </div>
+        <div><label><input type="checkbox" v-model="showControls" /> Map controls</label></div>
         <div v-if="type === 'custom'" class="my-2">
             <div v-if="meta.pro">
                 <div>
@@ -59,6 +60,7 @@ export default {
             zoom: null,
             type: null,
             style: null,
+            showControls: false,
             map: null,
             marker: null,
             hasMarker: false,
@@ -100,6 +102,9 @@ export default {
                 this.map.setStyle(this.hasCustomStyle ? this.style : 'mapbox://styles/mapbox/' + (this.style === 'custom' ? this.config.initial_type : this.type))
             }
         },
+        showControls () {
+            this.saveLocation()
+        },
     },
     computed: {
         hasGeocoder () {
@@ -129,6 +134,7 @@ export default {
         this.zoom = this.value.zoom || this.config.initial_zoom || 16
         this.type = this.value.type || this.config.initial_type || 'streets-v11'
         this.style = this.value.style
+        this.showControls = this.value.showControls
 
         mapboxgl.accessToken = this.meta.api_key
 
@@ -190,8 +196,6 @@ export default {
             if (this.config.markers) {
                 this.map.on('click', (e) => {
                     this.addMarker(e.lngLat)
-                    this.markerLng = e.lngLat.lng
-                    this.markerLat = e.lngLat.lat
                 })
             }
 
@@ -207,14 +211,13 @@ export default {
         addMarker (lngLat) {
             this.marker.setLngLat(lngLat)
             this.marker.addTo(this.map)
+            this.markerLat = lngLat.lat
+            this.markerLng = lngLat.lng
             this.hasMarker = true
 
             this.saveLocation()
         },
         addMarkerAtCenter () {
-            this.markerLng = this.map.getCenter().lng
-            this.markerLat = this.map.getCenter().lat
-
             this.addMarker(this.map.getCenter())
         },
         removeMarker () {
@@ -249,6 +252,7 @@ export default {
                 zoom: this.zoom,
                 type: this.type,
                 style: this.style,
+                showControls: this.showControls,
             })
         },
         findPosition () {
