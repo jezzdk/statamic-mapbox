@@ -33,10 +33,6 @@ class Mapbox extends Fieldtype
 
     public function augment($value)
     {
-        if (!isset($value['showControls'])) {
-            $value['showControls'] = $this->config('showControls', false);
-        }
-
         return MapboxHelper::convertToHtml($value);
     }
 
@@ -121,13 +117,6 @@ class Mapbox extends Fieldtype
             'geocoder' => [
                 'display' => 'Enable Geocoder',
                 'instructions' => 'Display a search field on the map for finding locations.',
-                'type' => 'toggle',
-                'default' => false,
-                'width' => 50
-            ],
-            'showControls' => [
-                'display' => 'Show controls (deprecated)',
-                'instructions' => 'This can now be set on the resource and will be removed in a later release.',
                 'type' => 'toggle',
                 'default' => false,
                 'width' => 50
