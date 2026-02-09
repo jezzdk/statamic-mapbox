@@ -1,5 +1,8 @@
 {
     "name": "jezzdk/statamic-mapbox",
+    "require": {
+        "statamic/cms": "^3.0|^4.0|^5.0"
+    },
     "autoload": {
         "psr-4": {
             "Jezzdk\\StatamicMapbox\\": "src"
