@@ -1,13 +1,5 @@
 {
     "name": "jezzdk/statamic-mapbox",
-    "require": {
-        "statamic/cms": "^3.0|^4.0|^5.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Jezzdk\\StatamicMapbox\\": "src"
-        }
-    },
     "authors": [
         {
             "name": "Jess Stopa"
@@ -15,6 +7,19 @@
     ],
     "support": {
         "email": "jess@stopa.dk"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jezzdk\\StatamicMapbox\\": "src"
+        }
+    },
+    "require": {
+        "statamic/cms": "^6.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
     },
     "extra": {
         "statamic": {
@@ -30,5 +35,7 @@
                 "Jezzdk\\StatamicMapbox\\ServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

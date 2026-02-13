@@ -1,8 +1,8 @@
 # Statamic Mapbox
-![Statamic 5.0+](https://img.shields.io/badge/Statamic-5.0+-FF269E?style=for-the-badge&link=https://statamic.com)
+![Statamic 6.0+](https://img.shields.io/badge/Statamic-6.0+-FF269E?style=for-the-badge&link=https://statamic.com)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/jezzdk/statamic-mapbox.svg?style=for-the-badge)](https://packagist.org/packages/jezzdk/statamic-mapbox)
 
-A Mapbox addon for Statamic V5 for creating and displaying a Mapbox map on your website.
+A Mapbox addon for Statamic 6 for creating and displaying a Mapbox map on your website.
 
 ## Installation
 

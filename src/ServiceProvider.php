@@ -17,7 +17,7 @@ class ServiceProvider extends AddonServiceProvider
             'resources/js/addon.js',
             'resources/css/addon.css',
         ],
-        'publicDirectory' => 'dist',
+        'publicDirectory' => 'resources/dist',
     ];
 
     protected $fieldtypes = [
