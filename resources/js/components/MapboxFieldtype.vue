@@ -275,7 +275,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div>
+    <div class="space-y-2">
         <div class="relative border border-gray-500">
             <div class="w-full max-w-3xl h-96 overflow-hidden mapbox-container" ref="mapRef"></div>
             <div v-if="config.maptypes" id="menu" class="absolute top-0 left-0 flex items-center gap-4 bg-gray-200 px-2 py-1">
@@ -303,22 +303,28 @@ onMounted(() => {
         </div>
         <div class="flex justify-between">
             <div>
-                <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="text-red-400! text-xs">[x] Remove marker</a>
-                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[+] Add marker</a>
+                <ui-button v-if="hasMarker" variant="danger" size="xs" text="Remove marker" @click.prevent="removeMarker()" />
+                <ui-button v-else-if="config.markers" variant="primary" size="xs" text="Add marker" @click.prevent="addMarker(map.getCenter())" />
             </div>
-            <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="text-red-400! text-xs">[-] Reset map</a></div>
+            <div>
+                <ui-button v-if="canReset && mapHasChanged" variant="ghost" size="xs" text="Reset map" @click.prevent="resetMap" />
+            </div>
         </div>
-        <div><label><input type="checkbox" v-model="showControls" /> Map controls</label></div>
+        <div class="flex items-center gap-8 text-sm">
+            <div class="flex items-center gap-2"><ui-switch v-model="showControls" size="sm" /> Show map controls</div>
+        </div>
         <div v-if="type === 'custom'" class="my-2">
-            <div v-if="meta.pro">
+            <div>
                 <div>
-                    <div class="help-block"><p>Paste in style URL here.</p></div>
-                    <input type="text" v-model="style" :placeholder="`mapbox://styles/mapbox/${config.initial_type}`" class="input-text">
-                    <div class="text-gray-600 text-xs">Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</div>
+                    <ui-label>Paste in style URL here:</ui-label>
+                    <div v-if="meta.pro">
+                        <ui-input type="text" v-model="style" :placeholder="`mapbox://styles/mapbox/${config.initial_type}`" />
+                        <ui-description>Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</ui-description>
+                    </div>
+                    <div v-else>
+                        <ui-alert text="You must have purchased a Pro licence for this feature to be enabled." />
+                    </div>
                 </div>
-            </div>
-            <div v-else>
-                <div>You must have purchased a Pro licence for this feature to be enabled.</div>
             </div>
         </div>
     </div>
