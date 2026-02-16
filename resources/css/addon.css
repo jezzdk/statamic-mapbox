@@ -1,1 +1,5 @@
 @import "@statamic/cms/tailwind.css";
+
+.mapbox-container {
+    @apply h-96;
+}
