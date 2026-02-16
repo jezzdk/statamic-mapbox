@@ -1,296 +1,178 @@
-<template>
-    <div>
-        <div class="relative border border-gray-500">
-            <div class="w-full max-w-3xl h-96 overflow-hidden" ref="map"></div>
-            <div v-if="config.maptypes" id="menu" class="absolute top-0 left-0 flex items-center gap-4 bg-gray-200 px-2 py-1">
-                <div class="flex items-center gap-1">
-                    <input id="streets-v11" type="radio" v-model="type" value="streets-v11">
-                    <label for="streets-v11">streets</label>
-                </div>
-                <div class="flex items-center gap-1">
-                    <input id="satellite-v9" type="radio" v-model="type" value="satellite-v9">
-                    <label for="satellite-v9">satellite</label>
-                </div>
-                <div class="flex items-center gap-1">
-                    <input id="satellite-streets-v11" type="radio" v-model="type" value="satellite-streets-v11">
-                    <label for="satellite-streets-v11">hybrid</label>
-                </div>
-                <div class="flex items-center gap-1">
-                    <input id="outdoors-v11" type="radio" v-model="type" value="outdoors-v11">
-                    <label for="outdoors-v11">outdoors</label>
-                </div>
-                <div v-if="meta.pro" class="flex items-center gap-1">
-                    <input id="custom" type="radio" v-model="type" value="custom">
-                    <label for="custom">custom</label>
-                </div>
-            </div>
-        </div>
-        <div class="flex justify-between">
-            <div>
-                <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="!text-red-400 text-xs">[x] Remove marker</a>
-                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[+] Add marker</a>
-            </div>
-            <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="!text-red-400 text-xs">[-] Reset map</a></div>
-        </div>
-        <div><label><input type="checkbox" v-model="showControls" /> Map controls</label></div>
-        <div v-if="type === 'custom'" class="my-2">
-            <div v-if="meta.pro">
-                <div>
-                    <div class="help-block"><p>Paste in the style URL here.</p></div>
-                    <input type="text" v-model="style" :placeholder="`mapbox://styles/mapbox/${config.initial_type}`" class="input-text">
-                    <div class="text-gray-600 text-xs">Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</div>
-                </div>
-            </div>
-            <div v-else>
-                <div>You must have purchased a Pro licence for this feature to be enabled.</div>
-            </div>
-        </div>
-    </div>
-</template>
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { Fieldtype } from '@statamic/cms'
 
-<script>
-export default {
-    mixins: [Fieldtype],
-    data() {
-        return {
-            lng: null,
-            lat: null,
-            markerLng: null,
-            markerLat: null,
-            zoom: null,
-            type: null,
-            style: null,
-            showControls: false,
-            map: null,
-            marker: null,
-            hasMarker: false,
-            geocoder: null,
-            location: null,
-        }
-    },
-    watch: {
-        lat () {
-            this.saveLocation()
-        },
-        lng () {
-            this.saveLocation()
-        },
-        markerLat () {
-            this.saveLocation()
-        },
-        markerLng () {
-            this.saveLocation()
-        },
-        zoom () {
-            this.saveLocation()
-        },
-        type () {
-            this.saveLocation()
+const emit = defineEmits(Fieldtype.emits)
+const props = defineProps(Fieldtype.props)
+const { expose, update } = Fieldtype.use(emit, props)
+defineExpose(expose)
 
-            if (this.map) {
-                if (this.type === 'custom') {
-                    this.map.setStyle(this.hasCustomStyle ? this.style : 'mapbox://styles/mapbox/' + this.config.initial_type)
-                } else {
-                    this.map.setStyle(this.hasCustomStyle ? this.style : 'mapbox://styles/mapbox/' + this.type)
-                }
-            }
-        },
-        style () {
-            this.saveLocation()
+// Reactive state
+const lng = ref(null)
+const lat = ref(null)
+const markerLng = ref(null)
+const markerLat = ref(null)
+const zoom = ref(null)
+const type = ref(null)
+const style = ref(null)
+const showControls = ref(false)
+const map = ref(null)
+const marker = ref(null)
+const hasMarker = ref(false)
+const geocoder = ref(null)
+const location = ref(null)
+const mapRef = ref(null)
 
-            if (this.map) {
-                this.map.setStyle(this.hasCustomStyle ? this.style : 'mapbox://styles/mapbox/' + (this.style === 'custom' ? this.config.initial_type : this.type))
-            }
-        },
-        showControls () {
-            this.saveLocation()
-        },
-    },
-    computed: {
-        hasGeocoder () {
-            return this.config.geocoder
-        },
-        canReset () {
-            return this.meta.defaultLng && this.meta.defaultLat
-        },
-        mapHasChanged () {
-            return this.lng != this.meta.defaultLng
-                || this.lat != this.meta.defaultLat
-                || this.zoom != this.config.initial_zoom
-                || this.type != this.config.initial_type
-        },
-        hasGeolocation () {
-            return navigator.geolocation || false
-        },
-        hasCustomStyle () {
-            return this.meta.pro && this.type === 'custom' && this.style
-        }
-    },
-    mounted () {
-        this.lng = this.value.lng || this.meta.defaultLng
-        this.lat = this.value.lat || this.meta.defaultLat
-        this.markerLng = this.value.markerLng
-        this.markerLat = this.value.markerLat
-        this.zoom = this.value.zoom || this.config.initial_zoom || 16
-        this.type = this.value.type || this.config.initial_type || 'streets-v11'
-        this.style = this.value.style
-        this.showControls = this.value.showControls
+// Computed properties
+const hasGeocoder = computed(() => props.config.geocoder)
 
-        mapboxgl.accessToken = this.meta.api_key
+const canReset = computed(() => props.meta.defaultLng && props.meta.defaultLat)
 
-        this.map = new mapboxgl.Map({
-            container: this.$refs.map,
-            projection: 'globe',
-            style: this.hasCustomStyle ? this.style : 'mapbox://styles/mapbox/' + this.type,
-            center: [Number.parseFloat(this.lng), Number.parseFloat(this.lat)],
-            zoom: Number(this.zoom),
-            attributionControl: false
-        })
+const mapHasChanged = computed(() => {
+    return lng.value != props.meta.defaultLng
+        || lat.value != props.meta.defaultLat
+        || zoom.value != props.config.initial_zoom
+        || type.value != props.config.initial_type
+})
 
-        this.addMapListeners()
+const hasGeolocation = computed(() => navigator.geolocation || false)
 
-        if (this.config.geocoder) {
-            this.map.addControl(
-                new MapboxGeocoder({
-                    accessToken: mapboxgl.accessToken,
-                    mapboxgl: mapboxgl,
-                    minLength: 5,
-                    clearAndBlurOnEsc: true,
-                    marker: false,
-                    flyTo: {
-                        maxDuration: 5000,
-                    },
-                })
-            )
-        }
+const hasCustomStyle = computed(() => props.meta.pro && type.value === 'custom' && style.value)
 
-        this.map.addControl(new mapboxgl.NavigationControl())
-        this.map.addControl(new mapboxgl.FullscreenControl())
-        this.map.addControl(new UserPositionControl(this.findUserPosition), 'bottom-right')
+// Watchers
+watch([lat, lng, markerLat, markerLng, zoom, showControls], () => {
+    saveLocation()
+})
 
-        if (this.config.markers) {
-            this.marker = new mapboxgl.Marker({
-                clickable: false,
-                draggable: true,
-            })
+watch(type, () => {
+    saveLocation()
 
-            this.marker.on('dragend', () => {
-                this.markerLng = this.marker.getLngLat().lng
-                this.markerLat = this.marker.getLngLat().lat
-            })
-
-            if (this.markerLat && this.markerLng) {
-                this.addMarker({
-                    lng: Number.parseFloat(this.markerLng),
-                    lat: Number.parseFloat(this.markerLat),
-                })
-            }
-        }
-    },
-    methods: {
-        addMapListeners () {
-            this.map.on('load', () => {
-                this.map.resize()
-            })
-
-            if (this.config.markers) {
-                this.map.on('click', (e) => {
-                    this.addMarker(e.lngLat)
-                })
-            }
-
-            this.map.on('moveend', () => {
-                this.lng = this.map.getCenter().lng
-                this.lat = this.map.getCenter().lat
-            })
-
-            this.map.on('zoomend', () => {
-                this.zoom = Math.round(this.map.getZoom())
-            })
-        },
-        addMarker (lngLat) {
-            this.marker.setLngLat(lngLat)
-            this.marker.addTo(this.map)
-            this.markerLat = lngLat.lat
-            this.markerLng = lngLat.lng
-            this.hasMarker = true
-
-            this.saveLocation()
-        },
-        addMarkerAtCenter () {
-            this.addMarker(this.map.getCenter())
-        },
-        removeMarker () {
-            this.marker.remove()
-            this.hasMarker = false
-            this.markerLng = null
-            this.markerLat = null
-
-            this.saveLocation()
-        },
-        resetMap () {
-            this.zoom = this.config.initial_zoom || 16
-            this.type = this.config.initial_type || 'streets-v11'
-            this.style = null
-
-            this.map.setCenter({
-                lng: Number.parseFloat(this.meta.defaultLng),
-                lat: Number.parseFloat(this.meta.defaultLat),
-            })
-
-            this.map.setZoom(Number(this.meta.defaultZoom) || 16)
-            this.map.setStyle('mapbox://styles/mapbox/' + (this.config.initial_type || 'streets-v11'))
-
-            this.removeMarker()
-        },
-        saveLocation () {
-            this.update({
-                lng: this.lng,
-                lat: this.lat,
-                markerLng: this.markerLng,
-                markerLat: this.markerLat,
-                zoom: this.zoom,
-                type: this.type,
-                style: this.style,
-                showControls: this.showControls,
-            })
-        },
-        findPosition () {
-            this.geocoder.geocode({
-                address: this.location
-            }).then((response) => {
-                if (response.results.length > 0) {
-                    this.$toast.success('Location found')
-
-                    let position = response.results[0].geometry.location
-                    this.map.setCenter(position)
-
-                    this.addMarker(position)
-                } else {
-                    this.$toast.error('Location not found')
-                }
-            }).catch((error) => {
-                this.$toast.error(error.message)
-            })
-        },
-        findUserPosition () {
-            if (!navigator.geolocation) {
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition((position) => {
-                const pos = {
-                    lng: position.coords.longitude,
-                    lat: position.coords.latitude,
-                };
-
-                this.map.setCenter(pos)
-            }, () => {
-                console.debug('Error getting user position')
-            })
+    if (map.value) {
+        if (type.value === 'custom') {
+            map.value.setStyle(hasCustomStyle.value ? style.value : 'mapbox://styles/mapbox/' + props.config.initial_type)
+        } else {
+            map.value.setStyle(hasCustomStyle.value ? style.value : 'mapbox://styles/mapbox/' + type.value)
         }
     }
-};
+})
+
+watch(style, () => {
+    saveLocation()
+
+    if (map.value) {
+        map.value.setStyle(hasCustomStyle.value ? style.value : 'mapbox://styles/mapbox/' + (style.value === 'custom' ? props.config.initial_type : type.value))
+    }
+})
+
+// Methods
+const addMapListeners = () => {
+    map.value.on('load', () => {
+        map.value.resize()
+    })
+
+    if (props.config.markers) {
+        map.value.on('click', (e) => {
+            addMarker(e.lngLat)
+        })
+    }
+
+    map.value.on('moveend', () => {
+        lng.value = map.value.getCenter().lng
+        lat.value = map.value.getCenter().lat
+    })
+
+    map.value.on('zoomend', () => {
+        zoom.value = Math.round(map.value.getZoom())
+    })
+}
+
+const addMarker = (lngLat) => {
+    marker.value.setLngLat(lngLat)
+    marker.value.addTo(map.value)
+    markerLat.value = lngLat.lat
+    markerLng.value = lngLat.lng
+    hasMarker.value = true
+
+    saveLocation()
+}
+
+const addMarkerAtCenter = () => {
+    addMarker(map.value.getCenter())
+}
+
+const removeMarker = () => {
+    marker.value.remove()
+    hasMarker.value = false
+    markerLng.value = null
+    markerLat.value = null
+
+    saveLocation()
+}
+
+const resetMap = () => {
+    zoom.value = props.config.initial_zoom || 16
+    type.value = props.config.initial_type || 'streets-v11'
+    style.value = null
+
+    map.value.setCenter({
+        lng: Number.parseFloat(props.meta.defaultLng),
+        lat: Number.parseFloat(props.meta.defaultLat),
+    })
+
+    map.value.setZoom(Number(props.meta.defaultZoom) || 16)
+    map.value.setStyle('mapbox://styles/mapbox/' + (props.config.initial_type || 'streets-v11'))
+
+    removeMarker()
+}
+
+const saveLocation = () => {
+    update({
+        lng: lng.value,
+        lat: lat.value,
+        markerLng: markerLng.value,
+        markerLat: markerLat.value,
+        zoom: zoom.value,
+        type: type.value,
+        style: style.value,
+        showControls: showControls.value,
+    })
+}
+
+const findPosition = () => {
+    geocoder.value.geocode({
+        address: location.value
+    }).then((response) => {
+        if (response.results.length > 0) {
+            console.log('Location found')
+
+            let position = response.results[0].geometry.location
+            map.value.setCenter(position)
+
+            addMarker(position)
+        } else {
+            console.error('Location not found')
+        }
+    }).catch((error) => {
+        console.error(error.message)
+    })
+}
+
+const findUserPosition = () => {
+    if (!navigator.geolocation) {
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition((position) => {
+        const pos = {
+            lng: position.coords.longitude,
+            lat: position.coords.latitude,
+        };
+
+        map.value.setCenter(pos)
+    }, () => {
+        console.debug('Error getting user position')
+    })
+}
 
 class UserPositionControl {
     constructor(onClick) {
@@ -303,7 +185,6 @@ class UserPositionControl {
         this._container = document.createElement("button")
         this._container.className = 'mapboxgl-ctrl'
         this._container.innerHTML = `
-<?xml version="1.0" encoding="iso-8859-1"?>
 <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512; display: block;" xml:space="preserve">
 <g><g><path d="M256,0c-48.551,0-95.818,13.675-136.693,39.545l16.044,25.35C171.419,42.066,213.139,30,256,30 c42.861,0,84.581,12.066,120.648,34.895l16.044-25.35C351.818,13.675,304.551,0,256,0z"/></g></g>
 <g><g><path d="M376.649,447.105C340.581,469.934,298.861,482,256,482c-42.861,0-84.581-12.066-120.648-34.895l-16.044,25.35 C160.182,498.325,207.449,512,256,512c48.551,0,95.818-13.675,136.693-39.545L376.649,447.105z"/></g></g>
@@ -329,4 +210,116 @@ class UserPositionControl {
         this._map = undefined
     }
 }
+
+onMounted(() => {
+    lng.value = props.value.lng || props.meta.defaultLng
+    lat.value = props.value.lat || props.meta.defaultLat
+    markerLng.value = props.value.markerLng
+    markerLat.value = props.value.markerLat
+    zoom.value = props.value.zoom || props.config.initial_zoom || 16
+    type.value = props.value.type || props.config.initial_type || 'streets-v11'
+    style.value = props.value.style
+    showControls.value = props.value.showControls
+
+    mapboxgl.accessToken = props.meta.api_key
+
+    map.value = new mapboxgl.Map({
+        container: mapRef.value,
+        projection: 'globe',
+        style: hasCustomStyle.value ? style.value : 'mapbox://styles/mapbox/' + type.value,
+        center: [Number.parseFloat(lng.value), Number.parseFloat(lat.value)],
+        zoom: Number(zoom.value),
+        attributionControl: false
+    })
+
+    addMapListeners()
+
+    if (props.config.geocoder) {
+        map.value.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                minLength: 5,
+                clearAndBlurOnEsc: true,
+                marker: false,
+                flyTo: {
+                    maxDuration: 5000,
+                },
+            })
+        )
+    }
+
+    map.value.addControl(new mapboxgl.NavigationControl())
+    map.value.addControl(new mapboxgl.FullscreenControl())
+    map.value.addControl(new UserPositionControl(findUserPosition), 'bottom-right')
+
+    if (props.config.markers) {
+        marker.value = new mapboxgl.Marker({
+            clickable: false,
+            draggable: true,
+        })
+
+        marker.value.on('dragend', () => {
+            markerLng.value = marker.value.getLngLat().lng
+            markerLat.value = marker.value.getLngLat().lat
+        })
+
+        if (markerLat.value && markerLng.value) {
+            addMarker({
+                lng: Number.parseFloat(markerLng.value),
+                lat: Number.parseFloat(markerLat.value),
+            })
+        }
+    }
+})
 </script>
+
+<template>
+    <div>
+        <div class="relative border border-gray-500">
+            <div class="w-full max-w-3xl h-96 overflow-hidden mapbox-container" ref="mapRef"></div>
+            <div v-if="config.maptypes" id="menu" class="absolute top-0 left-0 flex items-center gap-4 bg-gray-200 px-2 py-1">
+                <div class="flex items-center gap-1">
+                    <input id="streets-v11" type="radio" v-model="type" value="streets-v11">
+                    <label for="streets-v11">streets</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="satellite-v9" type="radio" v-model="type" value="satellite-v9">
+                    <label for="satellite-v9">satellite</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="satellite-streets-v11" type="radio" v-model="type" value="satellite-streets-v11">
+                    <label for="satellite-streets-v11">hybrid</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input id="outdoors-v11" type="radio" v-model="type" value="outdoors-v11">
+                    <label for="outdoors-v11">outdoors</label>
+                </div>
+                <div v-if="meta.pro" class="flex items-center gap-1">
+                    <input id="custom" type="radio" v-model="type" value="custom">
+                    <label for="custom">custom</label>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <div>
+                <a v-if="hasMarker" href="#" @click.prevent="removeMarker" class="text-red-400! text-xs">[x] Remove marker</a>
+                <a v-else-if="config.markers" href="#" @click.prevent="addMarkerAtCenter" class="text-xs">[+] Add marker</a>
+            </div>
+            <div><a v-if="canReset && mapHasChanged" href="#" @click.prevent="resetMap" class="text-red-400! text-xs">[-] Reset map</a></div>
+        </div>
+        <div><label><input type="checkbox" v-model="showControls" /> Map controls</label></div>
+        <div v-if="type === 'custom'" class="my-2">
+            <div v-if="meta.pro">
+                <div>
+                    <div class="help-block"><p>Paste in style URL here.</p></div>
+                    <input type="text" v-model="style" :placeholder="`mapbox://styles/mapbox/${config.initial_type}`" class="input-text">
+                    <div class="text-gray-600 text-xs">Need help? Check out the <a href="https://studio.mapbox.com/" target="_blank">style tool</a>.</div>
+                </div>
+            </div>
+            <div v-else>
+                <div>You must have purchased a Pro licence for this feature to be enabled.</div>
+            </div>
+        </div>
+    </div>
+</template>

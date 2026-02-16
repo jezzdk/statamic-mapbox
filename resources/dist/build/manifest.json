@@ -1,12 +1,13 @@
 {
   "resources/css/addon.css": {
-    "file": "assets/addon-1b3e8a97.css",
-    "isEntry": true,
-    "src": "resources/css/addon.css"
+    "file": "assets/addon-DIgLP-mn.css",
+    "src": "resources/css/addon.css",
+    "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-a2f110d8.js",
-    "isEntry": true,
-    "src": "resources/js/addon.js"
+    "file": "assets/addon-DRKQs-Jw.js",
+    "name": "addon",
+    "src": "resources/js/addon.js",
+    "isEntry": true
   }
 }
